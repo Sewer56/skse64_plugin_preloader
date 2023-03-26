@@ -4,6 +4,9 @@
 
 #include <vector>
 #include <fstream>
+#include <iostream>
+#include <io.h>
+#include <fcntl.h>     /* for _O_TEXT and _O_BINARY */
 
 HINSTANCE hLThis = 0;
 FARPROC p[329];
@@ -143,7 +146,6 @@ void LoadDLLPlugins()
     logFile << "DLLPlugin loader finished" << std::endl;
 }
 
-
 void LoadSKSEPlugins()
 {
 	if (alreadyLoaded)
@@ -154,11 +156,14 @@ void LoadSKSEPlugins()
 	std::ofstream logFile(logName, std::ios_base::out | std::ios_base::app);
 
 	logFile << "hook triggered, loading skse plugins" << std::endl;
-
+	
 	std::vector<std::string> filesToLoad;
 	WIN32_FIND_DATA wfd;
 	std::string dir = GetPluginsDirectory();
 	std::string search_dir = dir + "*.txt";
+
+	std::cout << "searching \"" << search_dir.c_str() << "\" for preloading" << std::endl;
+	logFile << "searching \"" << search_dir.c_str() << "\" for preloading" << std::endl;
 	HANDLE hFind = FindFirstFile(search_dir.c_str(), &wfd);
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
@@ -241,6 +246,12 @@ extern "C" {
 	// Use __declspec(dllexport) to export the function
 	__declspec(dllexport) void Init()
 	{
+		// Setup console.
+		AllocConsole();
+		AttachConsole(GetCurrentProcessId());
+		FILE* pCout;
+		freopen_s(&pCout, "CON", "w", stdout);
+
 		LoadDLLPlugins();
 		LoadSKSEPlugins();
 	}
